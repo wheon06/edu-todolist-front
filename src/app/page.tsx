@@ -236,12 +236,26 @@ export default function Home() {
                 type='checkbox'
                 className='ml-2 cursor-pointer rounded-sm checked:bg-green-500'
                 checked={todo.isChecked}
-                onChange={() => {
-                  setTodos(
-                    todos.map((t, i) =>
-                      i === index ? { ...t, checked: !t.isChecked } : t,
-                    ),
+                onChange={async () => {
+                  const updatedTodos = [...todos];
+                  updatedTodos[index].isChecked = !todo.isChecked;
+                  setTodos(updatedTodos);
+
+                  const options = {
+                    method: 'PATCH',
+                    headers: {
+                      'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                      isChecked: todo.isChecked,
+                    }),
+                  };
+
+                  const getTodoData = await getTodoFetch(
+                    '/todo/update/isChecked/' + todo.id,
+                    options,
                   );
+                  console.log(todo.isChecked);
                 }}
               />
               <div
