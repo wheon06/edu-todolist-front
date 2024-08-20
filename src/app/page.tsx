@@ -169,11 +169,22 @@ export default function Home() {
     );
   }
 
-  const filteredTodos = COMPLETED
-    ? todos.filter((todo) => todo.isChecked)
-    : ACTIVE
-      ? todos.filter((todo) => !todo.isChecked)
-      : todos;
+  const filteredTodos = todos
+    .filter((todo) => !todo.deletedAt || new Date(todo.deletedAt) > new Date())
+    .sort((a, b) => {
+      const dateA = new Date(a.updatedAt ?? 0).getTime();
+      const dateB = new Date(b.updatedAt ?? 0).getTime();
+      return arrayToggle ? dateA - dateB : dateB - dateA;
+    })
+    .filter((todo) => {
+      if (COMPLETED) {
+        return todo.isChecked;
+      } else if (ACTIVE) {
+        return !todo.isChecked;
+      } else {
+        return true;
+      }
+    });
 
   return (
     <div className='flex min-h-screen items-center justify-center bg-gray-300'>
