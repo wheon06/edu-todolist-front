@@ -4,4 +4,5 @@ type Todo = {
   isChecked: boolean;
   updatedAt?: string;
   deletedAt?: string;
+  userId: number;
 };

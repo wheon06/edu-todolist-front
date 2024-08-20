@@ -8,6 +8,8 @@ export default function Home() {
   const [COMPLETED, setCOMPLETED] = useState(false);
   const [arrayToggle, setArrayToggle] = useState(false);
 
+  const [userData, setUserData] = useState<User>();
+
   const [openTodoIndex, setOpenTodoIndex] = useState<{
     updateState: boolean;
     index: number | null;
@@ -16,6 +18,8 @@ export default function Home() {
   const [updatedText, setUpdatedText] = useState('');
 
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
+
+  const [selectMonth, setSelectMonth] = useState<number>(new Date().getMonth());
 
   const [todos, setTodos] = useState<Todo[]>([]);
 
@@ -60,6 +64,18 @@ export default function Home() {
   }
 
   useEffect(() => {
+    const options = {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    };
+
+    const getUserData = async () => {
+      const userData = await getTodoFetch('/auth/userInfo', options);
+      setUserData(userData);
+      console.log(userData);
+    };
+
     const intervalid = setInterval(() => {
       setCurrentDate(new Date());
     }, 1000);
@@ -75,6 +91,7 @@ export default function Home() {
       setTodos(getTodoData);
     }
 
+    getUserData();
     loadData();
 
     return () => clearInterval(intervalid);
@@ -121,7 +138,22 @@ export default function Home() {
       }),
     };
 
-    const todoData = await getTodoFetch('/todo/save', options);
+    await getTodoFetch('/todo/save', options);
+
+    if (!userData) return;
+
+    const newTodo = {
+      id: -1,
+      content: content,
+      isChecked: false,
+      updatedAt: new Date().toString(),
+      userId: userData.id,
+    };
+
+    todos.shift();
+    const updatedTodos = [newTodo, ...todos];
+    console.log(updatedTodos);
+    setTodos(updatedTodos);
     setOpenTodoIndex({ updateState: false, index: null, isNew: false });
   }
 
@@ -134,13 +166,16 @@ export default function Home() {
   }
 
   async function addTodoHandle() {
-    console.log('ss');
+    console.log(userData);
+    if (!userData) return;
     if (openTodoIndex.updateState) return;
+
     const newTodo = {
       id: -1,
       content: '',
       isChecked: false,
       updatedAt: new Date().toString(),
+      userId: userData.id,
     };
     const updatedTodos = [newTodo, ...todos];
     setTodos(updatedTodos);
@@ -176,7 +211,15 @@ export default function Home() {
   }
 
   const filteredTodos = todos
+    .filter((todo) => {
+      if (!userData) return false;
+      return userData.id === todo.userId;
+    })
     .filter((todo) => !todo.deletedAt || new Date(todo.deletedAt) > new Date())
+    .filter((todo) => {
+      const updatedAt = new Date(todo.updatedAt ?? 0);
+      return updatedAt.getMonth() === selectMonth;
+    })
     .sort((a, b) => {
       const dateA = new Date(a.updatedAt ?? 0).getTime();
       const dateB = new Date(b.updatedAt ?? 0).getTime();
@@ -200,25 +243,25 @@ export default function Home() {
             <h3 className='relative text-[28px] font-bold'>
               {currentDate.getFullYear().toString() +
                 '-' +
-                currentDate.getMonth().toString().padStart(2, '0') +
+                (currentDate.getMonth() + 1).toString().padStart(2, '0') +
                 '-' +
                 currentDate.getDate().toString().padStart(2, '0')}
             </h3>
             <div className='absolute mt-2 flex gap-1 font-bold'>
               <div className='mt-9 h-14 w-14 rounded-lg bg-black text-center text-[40px] text-white'>
-                {currentDate.getHours().toString()[0]}
+                {currentDate.getHours().toString().padStart(2, '0')[0]}
               </div>
               <div className='mt-9 h-14 w-14 rounded-lg bg-black text-center text-[40px] text-white'>
-                {currentDate.getHours().toString()[1]}
+                {currentDate.getHours().toString().padStart(2, '0')[1]}
               </div>
               <div className='h-14 w-7 rounded-lg text-center text-[80px] text-black'>
                 :
               </div>
               <div className='mt-9 h-14 w-14 rounded-lg bg-black text-center text-[40px] text-white'>
-                {currentDate.getMinutes().toString()[0]}
+                {currentDate.getMinutes().toString().padStart(2, '0')[0]}
               </div>
               <div className='mt-9 h-14 w-14 rounded-lg bg-black text-center text-[40px] text-white'>
-                {currentDate.getMinutes().toString()[1]}
+                {currentDate.getMinutes().toString().padStart(2, '0')[1]}
               </div>
             </div>
           </div>
@@ -265,14 +308,20 @@ export default function Home() {
           <div className='flex w-full justify-center'>
             <div className='relative mt-5 flex gap-1'>
               <button
-                onClick={() => {}}
+                onClick={() => {
+                  if (selectMonth > 0) setSelectMonth(selectMonth - 1);
+                }}
                 className='w-10 rounded-lg bg-gray-800 p-2 text-white'
               >
                 &lt;
               </button>
-              <h2 className='text-[26px] text-white'>8월</h2>
+              <h2 className='text-[26px] text-white'>
+                {selectMonth + 1 + '월'}
+              </h2>
               <button
-                onClick={() => {}}
+                onClick={() => {
+                  if (selectMonth < 11) setSelectMonth(selectMonth + 1);
+                }}
                 className='w-10 rounded-lg bg-gray-800 p-2 text-white'
               >
                 &gt;
