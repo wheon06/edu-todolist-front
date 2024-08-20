@@ -11,7 +11,8 @@ export default function Home() {
   const [openTodoIndex, setOpenTodoIndex] = useState<{
     updateState: boolean;
     index: number | null;
-  }>({ updateState: false, index: null });
+    isNew: boolean;
+  }>({ updateState: false, index: null, isNew: false });
   const [updatedText, setUpdatedText] = useState('');
 
   const [todos, setTodos] = useState<Todo[] | null>(null);
@@ -94,8 +95,34 @@ export default function Home() {
 
   const openTodoHandle = (index: number) => {
     if (openTodoIndex.updateState) return;
-    setOpenTodoIndex({ updateState: true, index: index });
+    setOpenTodoIndex({ updateState: true, index: index, isNew: false });
   };
+
+  async function createTodoHandle(content: string) {
+    const options = {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        content: content,
+        isChecked: false,
+      }),
+    };
+
+    const todoData = await getTodoFetch('/todo/save', options);
+    setOpenTodoIndex({ updateState: false, index: null, isNew: false });
+    if (todos) {
+      setTodos([
+        { id: todoData.id, content: todoData.content, isChecked: false },
+        ...todos,
+      ]);
+    } else {
+      setTodos([
+        { id: todoData.id, content: todoData.content, isChecked: false },
+      ]);
+    }
+  }
 
   if (todos === null) {
     return (
@@ -105,30 +132,42 @@ export default function Home() {
     );
   }
 
-  const addTodoHandle = () => {
-    filteredTodos.push();
-  };
+  async function addTodoHandle() {
+    console.log('ss');
+    if (openTodoIndex.updateState) return;
+    const newTodo = { id: -1, content: '', isChecked: false };
+    const updatedTodos = [newTodo, ...todos];
+    setTodos(updatedTodos);
+    setOpenTodoIndex({ updateState: true, index: 0, isNew: true });
+  }
 
-  const submitEditedContent = (index: number) => {
+  async function submitEditedContent(todos: Todo[], index: number) {
     if (updatedText === '') {
-      setOpenTodoIndex({ updateState: false, index: null });
-      console.log(openTodoIndex);
+      setOpenTodoIndex({ updateState: false, index: null, isNew: false });
       return;
     }
-    setTodos(
-      todos.map((todo) => {
-        if (todo.id === index) {
-          return {
-            ...todo,
-            content: updatedText,
-          };
-        }
-        return todo;
-      }),
-    );
+
     setUpdatedText('');
-    setOpenTodoIndex({ updateState: false, index: null });
-  };
+    setOpenTodoIndex({ updateState: false, index: null, isNew: false });
+
+    const updatedTodos = [...todos];
+    updatedTodos[index].content = updatedText;
+
+    const options = {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        content: updatedText,
+      }),
+    };
+
+    await getTodoFetch(
+      '/todo/update/content/' + updatedTodos[index].id,
+      options,
+    );
+  }
 
   const filteredTodos = COMPLETED
     ? todos.filter((todo) => todo.isChecked)
@@ -230,7 +269,15 @@ export default function Home() {
           {filteredTodos.map((todo: Todo, index) => (
             <div
               key={index}
-              className={`${todo.isChecked ? 'mt-2 flex h-12 w-full items-center rounded-lg bg-green-400 hover:bg-green-600 hover:text-white' : 'mt-2 flex h-12 w-full items-center rounded-lg bg-orange-300 hover:bg-gray-500 hover:text-white'}`}
+              className={`${
+                todo.isChecked
+                  ? openTodoIndex.updateState
+                    ? 'mt-2 flex h-12 w-full items-center rounded-lg bg-green-400 hover:bg-green-600'
+                    : 'mt-2 flex h-12 w-full items-center rounded-lg bg-green-400 hover:bg-green-600 hover:text-white'
+                  : openTodoIndex.updateState
+                    ? 'mt-2 flex h-12 w-full items-center rounded-lg bg-orange-300 hover:bg-gray-500'
+                    : 'mt-2 flex h-12 w-full items-center rounded-lg bg-orange-300 hover:bg-gray-500 hover:text-white'
+              }`}
             >
               <input
                 type='checkbox'
@@ -255,7 +302,6 @@ export default function Home() {
                     '/todo/update/isChecked/' + todo.id,
                     options,
                   );
-                  console.log(todo.isChecked);
                 }}
               />
               <div
@@ -263,30 +309,65 @@ export default function Home() {
                 className='ml-2 flex h-full w-full items-center pr-6'
               >
                 {openTodoIndex.updateState && openTodoIndex.index === index ? (
-                  <div className='flex h-full w-full py-2'>
-                    <input
-                      className='mr-1 h-full w-56 rounded-lg'
-                      value={updatedText}
-                      onChange={(e) => setUpdatedText(e.target.value)}
-                    />
-                    <button
-                      onClick={() => submitEditedContent(index)}
-                      className='mr-1 h-full w-14 rounded-lg bg-green-500'
-                    >
-                      수정
-                    </button>
-                    <button
-                      onClick={() => {
-                        //삭제로직
+                  !openTodoIndex.isNew ? (
+                    <div className='flex h-full w-full py-2'>
+                      <input
+                        className='mr-1 h-full w-56 rounded-lg'
+                        placeholder={todo.content}
+                        value={updatedText}
+                        onChange={(e) => setUpdatedText(e.target.value)}
+                      />
+                      <button
+                        onClick={() => submitEditedContent(todos, index)}
+                        className='mr-1 h-full w-14 rounded-lg bg-green-500'
+                      >
+                        수정
+                      </button>
+                      <button
+                        onClick={() => {
+                          //삭제로직
 
-                        setOpenTodoIndex({ updateState: false, index: null });
-                        console.log(todos);
-                      }}
-                      className='h-full w-14 rounded-lg bg-red-500'
-                    >
-                      삭제
-                    </button>
-                  </div>
+                          setOpenTodoIndex({
+                            updateState: false,
+                            index: null,
+                            isNew: false,
+                          });
+                        }}
+                        className='h-full w-14 rounded-lg bg-red-500'
+                      >
+                        삭제
+                      </button>
+                    </div>
+                  ) : (
+                    <div className='flex h-full w-full py-2'>
+                      <input
+                        className='mr-1 h-full w-56 rounded-lg'
+                        placeholder={todo.content}
+                        value={updatedText}
+                        onChange={(e) => setUpdatedText(e.target.value)}
+                      />
+                      <button
+                        onClick={() => createTodoHandle(updatedText)}
+                        className='mr-1 h-full w-14 rounded-lg bg-green-500'
+                      >
+                        등록
+                      </button>
+                      <button
+                        onClick={() => {
+                          //삭제로직
+
+                          setOpenTodoIndex({
+                            updateState: false,
+                            index: null,
+                            isNew: false,
+                          });
+                        }}
+                        className='h-full w-14 rounded-lg bg-red-500'
+                      >
+                        취소
+                      </button>
+                    </div>
+                  )
                 ) : (
                   <div>
                     <h2 className=''>{todo.content}</h2>
