@@ -15,7 +15,9 @@ export default function Home() {
   }>({ updateState: false, index: null, isNew: false });
   const [updatedText, setUpdatedText] = useState('');
 
-  const [todos, setTodos] = useState<Todo[] | null>(null);
+  const [currentDate, setCurrentDate] = useState<Date>(new Date());
+
+  const [todos, setTodos] = useState<Todo[]>([]);
 
   async function getTodoFetch(url: string, options: any): Promise<any> {
     const accessToken = localStorage.getItem('accessToken');
@@ -58,6 +60,10 @@ export default function Home() {
   }
 
   useEffect(() => {
+    const intervalid = setInterval(() => {
+      setCurrentDate(new Date());
+    }, 1000);
+
     async function loadData() {
       const options = {
         headers: {
@@ -68,7 +74,10 @@ export default function Home() {
       const getTodoData = await getTodoFetch('/todo', options);
       setTodos(getTodoData);
     }
+
     loadData();
+
+    return () => clearInterval(intervalid);
   }, []);
 
   const setAllHandle = () => {
@@ -99,6 +108,8 @@ export default function Home() {
   };
 
   async function createTodoHandle(content: string) {
+    if (content === '') return;
+
     const options = {
       method: 'POST',
       headers: {
@@ -112,16 +123,6 @@ export default function Home() {
 
     const todoData = await getTodoFetch('/todo/save', options);
     setOpenTodoIndex({ updateState: false, index: null, isNew: false });
-    if (todos) {
-      setTodos([
-        { id: todoData.id, content: todoData.content, isChecked: false },
-        ...todos,
-      ]);
-    } else {
-      setTodos([
-        { id: todoData.id, content: todoData.content, isChecked: false },
-      ]);
-    }
   }
 
   if (todos === null) {
@@ -135,7 +136,12 @@ export default function Home() {
   async function addTodoHandle() {
     console.log('ss');
     if (openTodoIndex.updateState) return;
-    const newTodo = { id: -1, content: '', isChecked: false };
+    const newTodo = {
+      id: -1,
+      content: '',
+      isChecked: false,
+      updatedAt: new Date().toString(),
+    };
     const updatedTodos = [newTodo, ...todos];
     setTodos(updatedTodos);
     setOpenTodoIndex({ updateState: true, index: 0, isNew: true });
@@ -191,22 +197,28 @@ export default function Home() {
       <div className='flex h-[700px] w-[400px] flex-col rounded-3xl bg-orange-400 shadow-2xl'>
         <div className='flex w-full flex-col items-center'>
           <div className='mb-24 mt-10 flex w-full flex-col items-center'>
-            <h3 className='relative text-[28px] font-bold'>2024-08-13</h3>
+            <h3 className='relative text-[28px] font-bold'>
+              {currentDate.getFullYear().toString() +
+                '-' +
+                currentDate.getMonth().toString().padStart(2, '0') +
+                '-' +
+                currentDate.getDate().toString().padStart(2, '0')}
+            </h3>
             <div className='absolute mt-2 flex gap-1 font-bold'>
               <div className='mt-9 h-14 w-14 rounded-lg bg-black text-center text-[40px] text-white'>
-                1
+                {currentDate.getHours().toString()[0]}
               </div>
               <div className='mt-9 h-14 w-14 rounded-lg bg-black text-center text-[40px] text-white'>
-                2
+                {currentDate.getHours().toString()[1]}
               </div>
               <div className='h-14 w-7 rounded-lg text-center text-[80px] text-black'>
                 :
               </div>
               <div className='mt-9 h-14 w-14 rounded-lg bg-black text-center text-[40px] text-white'>
-                3
+                {currentDate.getMinutes().toString()[0]}
               </div>
               <div className='mt-9 h-14 w-14 rounded-lg bg-black text-center text-[40px] text-white'>
-                8
+                {currentDate.getMinutes().toString()[1]}
               </div>
             </div>
           </div>
@@ -252,11 +264,17 @@ export default function Home() {
           </div>
           <div className='flex w-full justify-center'>
             <div className='relative mt-5 flex gap-1'>
-              <button className='w-10 rounded-lg bg-gray-800 p-2 text-white'>
+              <button
+                onClick={() => {}}
+                className='w-10 rounded-lg bg-gray-800 p-2 text-white'
+              >
                 &lt;
               </button>
               <h2 className='text-[26px] text-white'>8월</h2>
-              <button className='w-10 rounded-lg bg-gray-800 p-2 text-white'>
+              <button
+                onClick={() => {}}
+                className='w-10 rounded-lg bg-gray-800 p-2 text-white'
+              >
                 &gt;
               </button>
             </div>
@@ -335,8 +353,22 @@ export default function Home() {
                         수정
                       </button>
                       <button
-                        onClick={() => {
-                          //삭제로직
+                        onClick={async () => {
+                          const options = {
+                            method: 'DELETE',
+                            headers: {
+                              'Content-Type': 'application/json',
+                            },
+                          };
+
+                          await getTodoFetch(
+                            '/todo/delete/' + todo.id,
+                            options,
+                          );
+
+                          setTodos((prevTodos) =>
+                            prevTodos.filter((t) => t.id !== todo.id),
+                          );
 
                           setOpenTodoIndex({
                             updateState: false,
@@ -365,7 +397,7 @@ export default function Home() {
                       </button>
                       <button
                         onClick={() => {
-                          //삭제로직
+                          todos.shift();
 
                           setOpenTodoIndex({
                             updateState: false,
