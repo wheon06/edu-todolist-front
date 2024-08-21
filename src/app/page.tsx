@@ -168,6 +168,7 @@ export default function Home() {
   }
 
   async function addTodoHandle() {
+    if (COMPLETED) return;
     if (!userData) return;
     if (openTodoIndex.updateState) return;
 
