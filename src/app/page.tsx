@@ -1,6 +1,5 @@
 'use client';
 
-import { Console } from 'console';
 import { useEffect, useState } from 'react';
 
 export default function Home() {
@@ -8,6 +7,7 @@ export default function Home() {
   const [ACTIVE, setACTIVE] = useState(false);
   const [COMPLETED, setCOMPLETED] = useState(false);
   const [arrayToggle, setArrayToggle] = useState(false);
+  const [trigger, setTrigger] = useState(false);
 
   const [userData, setUserData] = useState<User>();
 
@@ -74,7 +74,6 @@ export default function Home() {
     const getUserData = async () => {
       const userData = await getTodoFetch('/auth/userInfo', options);
       setUserData(userData);
-      console.log(userData);
     };
 
     const intervalid = setInterval(() => {
@@ -89,6 +88,7 @@ export default function Home() {
       };
 
       const getTodoData = await getTodoFetch('/todo', options);
+      console.log(getTodoData);
       setTodos(getTodoData);
     }
 
@@ -96,7 +96,7 @@ export default function Home() {
     loadData();
 
     return () => clearInterval(intervalid);
-  }, []);
+  }, [trigger]);
 
   const setAllHandle = () => {
     if (!(!ACTIVE && ALL && !COMPLETED)) setALL(!ALL);
@@ -153,9 +153,10 @@ export default function Home() {
 
     todos.shift();
     const updatedTodos = [newTodo, ...todos];
-    console.log(updatedTodos);
     setTodos(updatedTodos);
+    setUpdatedText('');
     setOpenTodoIndex({ updateState: false, index: null, isNew: false });
+    setTrigger((prev) => !prev);
   }
 
   if (todos === null) {
@@ -167,7 +168,6 @@ export default function Home() {
   }
 
   async function addTodoHandle() {
-    console.log(userData);
     if (!userData) return;
     if (openTodoIndex.updateState) return;
 
@@ -189,11 +189,18 @@ export default function Home() {
       return;
     }
 
-    setUpdatedText('');
     setOpenTodoIndex({ updateState: false, index: null, isNew: false });
 
     const updatedTodos = [...todos];
-    updatedTodos[index].content = updatedText;
+    index = filteredTodos[index].id;
+
+    for (const updatedTodo of updatedTodos) {
+      if (updatedTodo.id === index) {
+        updatedTodo.content = updatedText;
+      }
+    }
+
+    setTodos(updatedTodos);
 
     const options = {
       method: 'PATCH',
@@ -205,10 +212,18 @@ export default function Home() {
       }),
     };
 
-    await getTodoFetch(
-      '/todo/update/content/' + updatedTodos[index].id,
-      options,
-    );
+    let targetId = -1;
+
+    for (const updatedTodo of updatedTodos) {
+      if (updatedTodo.id === index) {
+        targetId = updatedTodo.id;
+      }
+    }
+
+    await getTodoFetch('/todo/update/content/' + targetId, options);
+
+    setUpdatedText('');
+    setTrigger((prev) => !prev);
   }
 
   const filteredTodos = todos
@@ -222,6 +237,8 @@ export default function Home() {
       return updatedAt.getMonth() === selectMonth;
     })
     .sort((a, b) => {
+      if (a.id === -1) return -1;
+      if (b.id === -1) return 1;
       const dateA = new Date(a.updatedAt ?? 0).getTime();
       const dateB = new Date(b.updatedAt ?? 0).getTime();
       return arrayToggle ? dateA - dateB : dateB - dateA;
@@ -384,10 +401,14 @@ export default function Home() {
                     }),
                   };
 
-                  const getTodoData = await getTodoFetch(
-                    '/todo/update/isChecked/' + todo.id,
-                    options,
-                  );
+                  try {
+                    await getTodoFetch(
+                      '/todo/update/isChecked/' + todo.id,
+                      options,
+                    );
+                  } catch {
+                    return;
+                  }
                 }}
               />
               <div
@@ -400,7 +421,6 @@ export default function Home() {
                       <input
                         className='mr-1 h-full w-56 rounded-lg'
                         placeholder={todo.content}
-                        value={updatedText}
                         onChange={(e) => setUpdatedText(e.target.value)}
                       />
                       <button
@@ -432,6 +452,8 @@ export default function Home() {
                             index: null,
                             isNew: false,
                           });
+
+                          setTrigger((prev) => !prev);
                         }}
                         className='h-full w-14 rounded-lg bg-red-500'
                       >
@@ -442,8 +464,6 @@ export default function Home() {
                     <div className='flex h-full w-full py-2'>
                       <input
                         className='mr-1 h-full w-56 rounded-lg'
-                        placeholder={todo.content}
-                        value={updatedText}
                         onChange={(e) => setUpdatedText(e.target.value)}
                       />
                       <button
