@@ -98,6 +98,14 @@ export default function Home() {
     return () => clearInterval(intervalid);
   }, [trigger]);
 
+  if (todos.length === 0) {
+    return (
+      <div className='flex min-h-screen items-center justify-center'>
+        <h1 className='text-[100px]'>Loding...</h1>
+      </div>
+    );
+  }
+
   const setAllHandle = () => {
     if (!(!ACTIVE && ALL && !COMPLETED)) setALL(!ALL);
     setACTIVE(false);
@@ -157,14 +165,6 @@ export default function Home() {
     setUpdatedText('');
     setOpenTodoIndex({ updateState: false, index: null, isNew: false });
     setTrigger((prev) => !prev);
-  }
-
-  if (todos === null) {
-    return (
-      <div className='flex min-h-screen items-center justify-center'>
-        <h1 className='text-[100px]'>Loding...</h1>
-      </div>
-    );
   }
 
   async function addTodoHandle() {
