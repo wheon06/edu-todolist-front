@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Clock from './component/clock';
+import Clock from '../_components/clock';
 
 export default function Home() {
   const [ALL, setALL] = useState(true);
