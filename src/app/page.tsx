@@ -258,7 +258,13 @@ export default function Home() {
     <div className='flex min-h-screen items-center justify-center bg-gray-300'>
       <div className='flex h-[700px] w-[400px] flex-col rounded-3xl bg-orange-400 shadow-2xl'>
         <div className='flex w-full flex-col items-center'>
-          <div className='mb-24 mt-10 flex w-full flex-col items-center'>
+          <a
+            href='/login'
+            className='ml-72 mr-2 mt-2 rounded-lg bg-red-500 p-2 text-right text-white'
+          >
+            로그아웃
+          </a>
+          <div className='mb-24 flex w-full flex-col items-center'>
             <h3 className='relative text-[28px] font-bold'>
               {currentDate.getFullYear().toString() +
                 '-' +
