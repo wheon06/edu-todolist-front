@@ -23,7 +23,7 @@ export default function Home() {
 
   const [selectMonth, setSelectMonth] = useState<number>(new Date().getMonth());
 
-  const [todos, setTodos] = useState<Todo[]>([]);
+  const [todoList, setTodoList] = useState<Todo[]>([]);
 
   async function getTodoFetch(url: string, options: any): Promise<any> {
     const accessToken = localStorage.getItem('accessToken');
@@ -77,7 +77,7 @@ export default function Home() {
       setUserData(userData);
     };
 
-    const intervalid = setInterval(() => {
+    const intervalId = setInterval(() => {
       setCurrentDate(new Date());
     }, 1000);
 
@@ -89,20 +89,19 @@ export default function Home() {
       };
 
       const getTodoData = await getTodoFetch('/todo', options);
-      console.log(getTodoData);
-      setTodos(getTodoData);
+      setTodoList(getTodoData);
     }
 
     getUserData();
     loadData();
 
-    return () => clearInterval(intervalid);
+    return () => clearInterval(intervalId);
   }, [trigger]);
 
-  if (todos.length === 0) {
+  if (todoList.length === 0) {
     return (
       <div className='flex min-h-screen items-center justify-center'>
-        <h1 className='text-[100px]'>Loding...</h1>
+        <h1 className='text-[100px]'>Loading...</h1>
       </div>
     );
   }
@@ -160,9 +159,9 @@ export default function Home() {
       userId: userData.id,
     };
 
-    todos.shift();
-    const updatedTodos = [newTodo, ...todos];
-    setTodos(updatedTodos);
+    todoList.shift();
+    const updatedTodoList = [newTodo, ...todoList];
+    setTodoList(updatedTodoList);
     setUpdatedText('');
     setOpenTodoIndex({ updateState: false, index: null, isNew: false });
     setTrigger((prev) => !prev);
@@ -180,12 +179,12 @@ export default function Home() {
       updatedAt: new Date().toString(),
       userId: userData.id,
     };
-    const updatedTodos = [newTodo, ...todos];
-    setTodos(updatedTodos);
+    const updatedTodoList = [newTodo, ...todoList];
+    setTodoList(updatedTodoList);
     setOpenTodoIndex({ updateState: true, index: 0, isNew: true });
   }
 
-  async function submitEditedContent(todos: Todo[], index: number) {
+  async function submitEditedContent(todoList: Todo[], index: number) {
     if (updatedText === '') {
       setOpenTodoIndex({ updateState: false, index: null, isNew: false });
       return;
@@ -193,16 +192,16 @@ export default function Home() {
 
     setOpenTodoIndex({ updateState: false, index: null, isNew: false });
 
-    const updatedTodos = [...todos];
-    index = filteredTodos[index].id;
+    const updatedTodoList = [...todoList];
+    index = filteredTodoList[index].id;
 
-    for (const updatedTodo of updatedTodos) {
+    for (const updatedTodo of updatedTodoList) {
       if (updatedTodo.id === index) {
         updatedTodo.content = updatedText;
       }
     }
 
-    setTodos(updatedTodos);
+    setTodoList(updatedTodoList);
 
     const options = {
       method: 'PATCH',
@@ -216,7 +215,7 @@ export default function Home() {
 
     let targetId = -1;
 
-    for (const updatedTodo of updatedTodos) {
+    for (const updatedTodo of updatedTodoList) {
       if (updatedTodo.id === index) {
         targetId = updatedTodo.id;
       }
@@ -228,7 +227,7 @@ export default function Home() {
     setTrigger((prev) => !prev);
   }
 
-  const filteredTodos = todos
+  const filteredTodoList = todoList
     .filter((todo) => {
       if (!userData) return false;
       return userData.id === todo.userId;
@@ -355,7 +354,7 @@ export default function Home() {
           </div>
         </div>
         <div className='mb-3 mt-3 h-full w-full overflow-scroll rounded-lg p-2 scrollbar-hide'>
-          {filteredTodos.map((todo: Todo, index) => (
+          {filteredTodoList.map((todo: Todo, index) => (
             <div
               key={index}
               className={`${
@@ -373,16 +372,16 @@ export default function Home() {
                 className='ml-2 cursor-pointer rounded-sm checked:bg-green-500'
                 checked={todo.isChecked}
                 onChange={async () => {
-                  index = filteredTodos[index].id;
-                  const updatedTodos = [...todos];
+                  index = filteredTodoList[index].id;
+                  const updatedTodoList = [...todoList];
 
-                  for (const updatedTodo of updatedTodos) {
+                  for (const updatedTodo of updatedTodoList) {
                     if (updatedTodo.id === index) {
                       updatedTodo.isChecked = !updatedTodo.isChecked;
                     }
                   }
 
-                  setTodos(updatedTodos);
+                  setTodoList(updatedTodoList);
 
                   const options = {
                     method: 'PATCH',
@@ -417,7 +416,7 @@ export default function Home() {
                         onChange={(e) => setUpdatedText(e.target.value)}
                       />
                       <button
-                        onClick={() => submitEditedContent(todos, index)}
+                        onClick={() => submitEditedContent(todoList, index)}
                         className='mr-1 h-full w-14 rounded-lg bg-green-500'
                       >
                         수정
@@ -436,8 +435,8 @@ export default function Home() {
                             options,
                           );
 
-                          setTodos((prevTodos) =>
-                            prevTodos.filter((t) => t.id !== todo.id),
+                          setTodoList((prevTodoList) =>
+                            prevTodoList.filter((t) => t.id !== todo.id),
                           );
 
                           setOpenTodoIndex({
@@ -467,7 +466,7 @@ export default function Home() {
                       </button>
                       <button
                         onClick={() => {
-                          todos.shift();
+                          todoList.shift();
 
                           setOpenTodoIndex({
                             updateState: false,
