@@ -51,6 +51,7 @@ export default function Join() {
 
   return (
     <div className='flex min-h-screen items-center justify-center bg-gray-300'>
+      <title>Todo | LOGIN</title>
       <div className='flex h-[500px] w-[400px] flex-col rounded-3xl bg-white p-4 shadow-2xl'>
         <h2 className='mb-14 mt-10 text-center text-[70px] font-bold'>TODO</h2>
         <form className='flex flex-col gap-2' onSubmit={handleSubmit}>
@@ -79,7 +80,7 @@ export default function Join() {
           />
         </form>
         <a
-          href='/login'
+          href='/join'
           className='mt-2 flex h-12 w-full cursor-pointer items-center justify-center rounded-full bg-gray-300'
         >
           회원가입

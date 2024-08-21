@@ -52,6 +52,7 @@ export default function Join() {
 
   return (
     <div className='flex min-h-screen items-center justify-center bg-gray-300'>
+      <title>Todo | JOIN</title>
       <div className='flex h-[500px] w-[400px] flex-col rounded-3xl bg-white p-4 shadow-2xl'>
         <h2 className='mb-14 mt-10 text-center text-[70px] font-bold'>JOIN</h2>
         <form className='flex flex-col gap-2' onSubmit={handleSubmit}>
