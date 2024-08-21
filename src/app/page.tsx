@@ -1,5 +1,6 @@
 'use client';
 
+import { Console } from 'console';
 import { useEffect, useState } from 'react';
 
 export default function Home() {
@@ -362,8 +363,15 @@ export default function Home() {
                 className='ml-2 cursor-pointer rounded-sm checked:bg-green-500'
                 checked={todo.isChecked}
                 onChange={async () => {
+                  index = filteredTodos[index].id;
                   const updatedTodos = [...todos];
-                  updatedTodos[index].isChecked = !todo.isChecked;
+
+                  for (const updatedTodo of updatedTodos) {
+                    if (updatedTodo.id === index) {
+                      updatedTodo.isChecked = !updatedTodo.isChecked;
+                    }
+                  }
+
                   setTodos(updatedTodos);
 
                   const options = {
