@@ -260,7 +260,11 @@ export default function Home() {
       <div className='flex h-[700px] w-[400px] flex-col rounded-3xl bg-orange-400 shadow-2xl'>
         <div className='flex w-full flex-col items-center'>
           <a
-            href='/login'
+            onClick={() => {
+              localStorage.removeItem('accessToken');
+              localStorage.removeItem('refreshToken');
+              window.location.href = '/login';
+            }}
             className='ml-72 mr-2 mt-2 rounded-lg bg-red-500 p-2 text-right text-white hover:bg-red-700'
           >
             로그아웃
