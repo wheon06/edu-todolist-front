@@ -260,7 +260,7 @@ export default function Home() {
         <div className='flex w-full flex-col items-center'>
           <a
             href='/login'
-            className='ml-72 mr-2 mt-2 rounded-lg bg-red-500 p-2 text-right text-white'
+            className='ml-72 mr-2 mt-2 rounded-lg bg-red-500 p-2 text-right text-white hover:bg-red-700'
           >
             로그아웃
           </a>
